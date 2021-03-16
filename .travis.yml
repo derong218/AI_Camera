@@ -35,7 +35,6 @@ cache:
   - "$HOME/.gradle/wrapper/"
   - "$HOME/.android/build-cache"
 before_install:
-  - openssl aes-256-cbc -K $encrypted_0fc01839c44e_key -iv $encrypted_0fc01839c44e_iv -in keystore.enc -out keystore -d
   - sudo chmod +x gradlew
 install:
   - echo y | sdkmanager 'ndk;16.1.4479499'
@@ -44,12 +43,21 @@ before_script:
   - touch local.properties
   - "./gradlew clean"
 script:
-  - ./gradlew assembleRelease
+  - ./gradlew assembleDebug
+before_deploy:
+- export TRAVIS_TAG="1.0.$TRAVIS_BUILD_NUMBER"
+- echo "$TRAVIS_TAG" "$TRAVIS_COMMIT"
+- git config --local user.name "$USER_NAME"
+- git config --local user.email "$USER_EMAIL"
+- git tag "$TRAVIS_TAG" "$TRAVIS_COMMIT"
 deploy:
   - provider: releases
     api_key: $GITHUB_API_TOKEN
-    file: app/build/outputs/apk/release/*
+    tag_name: $TRAVIS_TAG
+    name: $TRAVIS_TAG
+    overwrite: true
+    file: app/build/outputs/apk/debug/*
     file_glob: true
     skip_cleanup: true
     on:
-        tags: true
+      branch: master
